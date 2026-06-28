@@ -2,26 +2,30 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
-interface Config {
-  site_title?: string;
-  welcome_text?: string;
-  gate_password?: string;
-  tagline?: string;
-}
-
-export default function UniverseGate({ config }: { config: Config | null }) {
+export default function UniverseGate({ config }: { config: Record<string, string> | null }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [gatePassword, setGatePassword] = useState(config?.gate_password || "yildizlar2015");
   const router = useRouter();
 
   const siteTitle = config?.site_title || "Bizim Evrenimiz";
   const welcomeText = config?.welcome_text || "Bu evren herkese kapalı.";
-  const gatePassword = config?.gate_password || "yildizlar2015";
 
   useEffect(() => {
+    // Şifreyi her seferinde Supabase'den taze çek
+    supabase
+      .from("site_config")
+      .select("value")
+      .eq("key", "gate_password")
+      .single()
+      .then(({ data }) => {
+        if (data?.value) setGatePassword(data.value);
+      });
+
     const entered = localStorage.getItem("universe_access");
     if (entered === "true") {
       router.replace("/evren");
@@ -74,10 +78,7 @@ export default function UniverseGate({ config }: { config: Config | null }) {
           </p>
         )}
 
-        <button
-          type="submit"
-          style={{ width: "100%", padding: "14px", background: "rgba(201, 169, 110, 0.12)", border: "1px solid rgba(201, 169, 110, 0.35)", borderRadius: "4px", color: "#C9A96E", fontFamily: "Georgia, serif", fontSize: "13px", letterSpacing: "3px", textTransform: "uppercase", cursor: "pointer" }}
-        >
+        <button type="submit" style={{ width: "100%", padding: "14px", background: "rgba(201, 169, 110, 0.12)", border: "1px solid rgba(201, 169, 110, 0.35)", borderRadius: "4px", color: "#C9A96E", fontFamily: "Georgia, serif", fontSize: "13px", letterSpacing: "3px", textTransform: "uppercase", cursor: "pointer" }}>
           Evrene Gir
         </button>
       </form>
